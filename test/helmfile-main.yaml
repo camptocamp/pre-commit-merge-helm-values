@@ -1,0 +1,4 @@
+releases:
+  - values:
+      - values-1.yaml
+      - values-2.yaml

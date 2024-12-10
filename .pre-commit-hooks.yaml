@@ -1,0 +1,8 @@
+- id: merge-helm-values
+  name: merge helm values
+  entry: merge-helm-values
+  language: python
+  files: |
+    (?x)^(
+      .*\.yaml
+    )$

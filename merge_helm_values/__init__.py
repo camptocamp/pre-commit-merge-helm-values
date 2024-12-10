@@ -1,0 +1,124 @@
+#!/usr/bin/env python3
+
+import argparse
+from ast import arguments
+import glob
+import os
+import subprocess
+from io import StringIO
+from pathlib import Path
+from typing import Any
+
+import ruamel.yaml
+import yaml
+from ruamel.yaml.comments import CommentedMap
+
+
+def commented_map(data: Any, file_name: str) -> Any:
+    if isinstance(data, dict):
+        cm = CommentedMap({key: commented_map(value, file_name) for key, value in data.items()})
+        for key, value in data.items():
+            if not isinstance(value, dict):
+                cm.yaml_add_eol_comment(key=key, comment=f"from {file_name}")
+        return cm
+    return data
+
+
+def deep_merge(base: dict[str, Any], other: dict[str, Any], other_file_name: str) -> None:
+    for key, value in other.items():
+        if isinstance(value, dict) and isinstance(base.get(key), dict):
+            deep_merge(base[key], value, other_file_name)
+        else:
+            if isinstance(value, dict):
+                base[key] = commented_map(value, other_file_name)
+            else:
+                base[key] = value
+                base.yaml_add_eol_comment(key=key, comment=f"from {other_file_name}")
+
+
+def _main():
+    parser = argparse.ArgumentParser(description="Convert a yaml file to a json file")
+    parser.add_argument('--helmfile', help='Unix style pathname pattern expansion used to find the helmfile files',
+                        default='**/helmfile-main.yaml'
+                        )
+    parser.add_argument(
+        '--pre-commit', help='Run pre-commit hooks to call on the modified files (comma separated)', default="prettier")
+    parser.add_argument("input", nargs="*", help="The yaml modified files")
+    args = parser.parse_args()
+
+    ruamel_yaml = ruamel.yaml.YAML()
+
+    helmfile_filenames = set()
+    if args.input:
+        refs = {}
+        for helmfiles_filename in glob.glob(argparse.helmfile, recursive=True):
+            with open(helmfiles_filename) as f:
+                data = yaml.load(f, Loader=yaml.SafeLoader)
+                for release in data["releases"]:
+                    for value_filename in release.get("values", []):
+                        real_value_filename = (
+                            Path(helmfiles_filename).parent.joinpath(value_filename).resolve()
+                        )
+                        refs.setdefault(real_value_filename, []).append(Path(helmfiles_filename))
+        for filename in args.input:
+            pathname = Path(filename).resolve()
+            if pathname in refs:
+                for helmfile_filename in refs[pathname]:
+                    helmfile_filenames.add(helmfile_filename)
+    else:
+        helmfile_filenames = [
+            Path(filename) for filename in glob.glob(argparse.helmfile, recursive=True)
+        ]
+
+    values_filenames = []
+    for helmfile_filename in helmfile_filenames:
+        with helmfile_filename.open() as f:
+            data = yaml.load(f, Loader=yaml.SafeLoader)
+        assert len(data["releases"]) == 1
+        for release in data["releases"]:
+            values = CommentedMap()
+            for value_filename in release.get("values", []):
+                real_value_filename = helmfile_filename.parent.joinpath(value_filename)
+                if not real_value_filename.exists():
+                    print(f"File {real_value_filename} does not exist")
+                    continue
+                with open(real_value_filename) as f:
+                    deep_merge(
+                        values,
+                        yaml.load(f, Loader=yaml.SafeLoader),
+                        str(real_value_filename.resolve().relative_to(os.getcwd())),
+                    )
+            values_filename = helmfile_filename.parent.joinpath("values.yaml")
+            with values_filename.open() as f:
+                original = yaml.dump(yaml.load(f, Loader=yaml.SafeLoader), default_flow_style=False)
+
+            # Update the file if there is a change
+            values_str = StringIO()
+            ruamel_yaml.dump(values, values_str)
+            if original != yaml.dump(
+                yaml.load(values_str.getvalue(), Loader=yaml.SafeLoader), default_flow_style=False
+            ):
+                values_filenames.append(values_filename)
+                print(f"Updating {values_filename}")
+                with values_filename.open("w") as f:
+                    ruamel_yaml.dump(values, f)
+
+    if not values_filenames:
+        return
+
+    env = {**os.environ, "SKIP": "merge-values"}
+    if args.pre_commit:
+        subprocess.run(
+            [
+                "pre-commit",
+                "run",
+                "--color=never",
+                *arguments.pre_commit.split(","),
+                *[f"--files={filename}" for filename in values_filenames],
+            ],
+            env=env,
+        )
+
+
+if __name__ == "__main__":
+    _main()
