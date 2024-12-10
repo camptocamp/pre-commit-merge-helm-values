@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-from ast import arguments
 import glob
 import os
 import subprocess
@@ -14,9 +13,9 @@ import yaml
 from ruamel.yaml.comments import CommentedMap
 
 
-def commented_map(data: Any, file_name: str) -> Any:
+def _commented_map(data: Any, file_name: str) -> Any:
     if isinstance(data, dict):
-        cm = CommentedMap({key: commented_map(value, file_name) for key, value in data.items()})
+        cm = CommentedMap({key: _commented_map(value, file_name) for key, value in data.items()})
         for key, value in data.items():
             if not isinstance(value, dict):
                 cm.yaml_add_eol_comment(key=key, comment=f"from {file_name}")
@@ -24,25 +23,31 @@ def commented_map(data: Any, file_name: str) -> Any:
     return data
 
 
-def deep_merge(base: dict[str, Any], other: dict[str, Any], other_file_name: str) -> None:
+def _deep_merge(base: dict[str, Any], other: dict[str, Any], other_file_name: str) -> None:
     for key, value in other.items():
         if isinstance(value, dict) and isinstance(base.get(key), dict):
-            deep_merge(base[key], value, other_file_name)
+            _deep_merge(base[key], value, other_file_name)
         else:
             if isinstance(value, dict):
-                base[key] = commented_map(value, other_file_name)
+                base[key] = _commented_map(value, other_file_name)
             else:
                 base[key] = value
                 base.yaml_add_eol_comment(key=key, comment=f"from {other_file_name}")
 
 
-def _main():
-    parser = argparse.ArgumentParser(description="Convert a yaml file to a json file")
-    parser.add_argument('--helmfile', help='Unix style pathname pattern expansion used to find the helmfile files',
-                        default='**/helmfile-main.yaml'
-                        )
+def main():
+    """Merge the HELM values files into a single file."""
+    parser = argparse.ArgumentParser(description="Merge the HELM values files into a single file")
     parser.add_argument(
-        '--pre-commit', help='Run pre-commit hooks to call on the modified files (comma separated)', default="prettier")
+        "--helmfile",
+        help="Unix style pathname pattern expansion used to find the helmfile files",
+        default="**/helmfile-main.yaml",
+    )
+    parser.add_argument(
+        "--pre-commit",
+        help="Run pre-commit hooks to call on the modified files (comma separated)",
+        default="prettier",
+    )
     parser.add_argument("input", nargs="*", help="The yaml modified files")
     args = parser.parse_args()
 
@@ -51,7 +56,7 @@ def _main():
     helmfile_filenames = set()
     if args.input:
         refs = {}
-        for helmfiles_filename in glob.glob(argparse.helmfile, recursive=True):
+        for helmfiles_filename in glob.glob(args.helmfile, recursive=True):
             with open(helmfiles_filename) as f:
                 data = yaml.load(f, Loader=yaml.SafeLoader)
                 for release in data["releases"]:
@@ -66,9 +71,7 @@ def _main():
                 for helmfile_filename in refs[pathname]:
                     helmfile_filenames.add(helmfile_filename)
     else:
-        helmfile_filenames = [
-            Path(filename) for filename in glob.glob(argparse.helmfile, recursive=True)
-        ]
+        helmfile_filenames = [Path(filename) for filename in glob.glob(args.helmfile, recursive=True)]
 
     values_filenames = []
     for helmfile_filename in helmfile_filenames:
@@ -83,14 +86,16 @@ def _main():
                     print(f"File {real_value_filename} does not exist")
                     continue
                 with open(real_value_filename) as f:
-                    deep_merge(
+                    _deep_merge(
                         values,
                         yaml.load(f, Loader=yaml.SafeLoader),
                         str(real_value_filename.resolve().relative_to(os.getcwd())),
                     )
             values_filename = helmfile_filename.parent.joinpath("values.yaml")
-            with values_filename.open() as f:
-                original = yaml.dump(yaml.load(f, Loader=yaml.SafeLoader), default_flow_style=False)
+            original = ""
+            if values_filename.exists():
+                with values_filename.open() as f:
+                    original = yaml.dump(yaml.load(f, Loader=yaml.SafeLoader), default_flow_style=False)
 
             # Update the file if there is a change
             values_str = StringIO()
@@ -108,12 +113,12 @@ def _main():
 
     env = {**os.environ, "SKIP": "merge-values"}
     if args.pre_commit:
-        subprocess.run(
-            [
+        subprocess.run(  # noqa: S603
+            [  # noqa: S607
                 "pre-commit",
                 "run",
                 "--color=never",
-                *arguments.pre_commit.split(","),
+                *args.pre_commit.split(","),
                 *[f"--files={filename}" for filename in values_filenames],
             ],
             env=env,
@@ -121,4 +126,4 @@ def _main():
 
 
 if __name__ == "__main__":
-    _main()
+    main()
