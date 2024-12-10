@@ -59,8 +59,6 @@ repos:
     rev: v2.3.0
     hooks:
       - id: codespell
-        args:
-          - --ignore-words=.github/spell-ignore-words.txt
         exclude: ^poetry.lock$
   - repo: https://github.com/asottile/pyupgrade
     rev: v3.17.0

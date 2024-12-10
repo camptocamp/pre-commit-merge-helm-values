@@ -35,7 +35,7 @@ authors = ["Camptocamp <info@camptocamp.com>"]
 repository = "https://github.com/camptocamp/pre-commit-merge-helm-values"
 
 [tool.poetry.scripts]
-merge-helm-value = "merge_helm_values:main"
+merge-helm-values = "merge_helm_values:main"
 
 [tool.poetry.dependencies]
 python = ">=3.9,<4.0"
