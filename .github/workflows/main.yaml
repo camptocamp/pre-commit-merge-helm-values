@@ -40,7 +40,7 @@ jobs:
           restore-keys: |
             pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
             pre-commit-
-      - run: pre-commit run --all-files
+      - run: pre-commit run --all-files --color=always
         env:
           SKIP: poetry-lock,pipenv-lock,helm-lock
       - run: git diff --exit-code --patch > /tmp/pre-commit.patch || true
@@ -52,31 +52,3 @@ jobs:
           path: /tmp/pre-commit.patch
           retention-days: 1
         if: failure()
-
-  publish:
-    name: Publish
-    runs-on: ubuntu-24.04
-    timeout-minutes: 15
-    if: "!startsWith(github.event.head_commit.message, '[skip ci] ')"
-    needs: pre-commit
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - run: python3 -m pip install --requirement=.github/requirements.txt
-
-      - name: Init pypi
-        run: |-
-          echo "[pypi]" > ~/.pypirc
-          echo "username = ${{ secrets.PYPI_USERNAME }}" >> ~/.pypirc
-          echo "password = ${{ secrets.PYPI_PASSWORD }}" >> ~/.pypirc
-        if: env.HAS_SECRETS == 'HAS_SECRETS'
-      - name: Publish
-        run: c2cciutils-publish
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
-        if: env.HAS_SECRETS == 'HAS_SECRETS'
