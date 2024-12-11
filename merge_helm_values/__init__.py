@@ -46,8 +46,13 @@ def main():
     parser.add_argument(
         "--pre-commit",
         help="Run pre-commit hooks to call on the modified files (comma separated)",
-        default="prettier",
     )
+    parser.add_argument(
+        "--pre-commit-skip",
+        help="Skip the pre-commit hooks",
+        default="merge-helm-values",
+    )
+
     parser.add_argument("input", nargs="*", help="The yaml modified files")
     args = parser.parse_args()
 
@@ -111,17 +116,20 @@ def main():
     if not values_filenames:
         return
 
-    env = {**os.environ, "SKIP": "merge-values"}
-    if args.pre_commit:
+    if args.pre_commit is not None:
         subprocess.run(  # noqa: S603
             [  # noqa: S607
                 "pre-commit",
                 "run",
                 "--color=never",
-                *args.pre_commit.split(","),
+                *(args.pre_commit.split(",") if args.pre_commit else []),
                 *[f"--files={filename}" for filename in values_filenames],
             ],
-            env=env,
+            env=(
+                {**os.environ, "SKIP": args.pre_commit_skip}
+                if args.pre_commit_skip is not None
+                else os.environ
+            ),
         )
 
 
