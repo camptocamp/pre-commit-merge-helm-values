@@ -38,19 +38,21 @@ def _deep_merge(base: dict[str, Any], other: dict[str, Any], other_file_name: st
 def main():
     """Merge the HELM values files into a single file."""
     parser = argparse.ArgumentParser(description="Merge the HELM values files into a single file")
+    default_helmfile = "**/helmfile-base.yaml"
     parser.add_argument(
         "--helmfile",
-        help="Unix style pathname pattern expansion used to find the helmfile files",
-        default="**/helmfile-main.yaml",
+        help=f"Unix style pathname pattern expansion used to find the helmfile files, default is {default_helmfile}",
+        default=default_helmfile,
     )
     parser.add_argument(
         "--pre-commit",
         help="Run pre-commit hooks to call on the modified files (comma separated)",
     )
+    default_pre_commit_skip = "merge-helm-values"
     parser.add_argument(
         "--pre-commit-skip",
-        help="Skip the pre-commit hooks",
-        default="merge-helm-values",
+        help=f"Skip the pre-commit hooks, default is {default_pre_commit_skip}",
+        default=default_pre_commit_skip,
     )
 
     parser.add_argument("input", nargs="*", help="The yaml modified files")
@@ -77,6 +79,11 @@ def main():
                     helmfile_filenames.add(helmfile_filename)
     else:
         helmfile_filenames = [Path(filename) for filename in glob.glob(args.helmfile, recursive=True)]
+
+    print("Found helmfiles:")
+    for helmfile_filename in helmfile_filenames:
+        print(f"  {helmfile_filename}")
+    print()
 
     values_filenames = []
     for helmfile_filename in helmfile_filenames:

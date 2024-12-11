@@ -1,2 +1,5 @@
 one: 1
 two: 2a
+four: [4]
+five:
+  six: 6
