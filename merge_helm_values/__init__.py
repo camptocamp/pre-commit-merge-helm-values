@@ -11,11 +11,16 @@ from typing import Any
 import ruamel.yaml
 import yaml
 from ruamel.yaml.comments import CommentedMap
+from ruamel.yaml.scalarstring import LiteralScalarString
 
 
 def _commented_map(data: Any, file_name: str) -> Any:
     if isinstance(data, dict):
-        cm = CommentedMap({key: _commented_map(value, file_name) for key, value in data.items()})
+        new_data = {
+            key: LiteralScalarString(value) if isinstance(value, str) and "\n" in value else value
+            for key, value in data.items()
+        }
+        cm = CommentedMap({key: _commented_map(value, file_name) for key, value in new_data.items()})
         for key, value in data.items():
             if not isinstance(value, dict):
                 cm.yaml_add_eol_comment(key=key, comment=f"from {file_name}")
@@ -31,7 +36,10 @@ def _deep_merge(base: dict[str, Any], other: dict[str, Any], other_file_name: st
             if isinstance(value, dict):
                 base[key] = _commented_map(value, other_file_name)
             else:
-                base[key] = value
+                if isinstance(value, str) and "\n" in value:
+                    base[key] = LiteralScalarString(value)
+                else:
+                    base[key] = value
                 base.yaml_add_eol_comment(key=key, comment=f"from {other_file_name}")
 
 
