@@ -49,7 +49,7 @@ def main():
     default_helmfile = "**/helmfile-base.yaml"
     parser.add_argument(
         "--helmfile",
-        help=f"Unix style pathname pattern expansion used to find the helmfile files, default is {default_helmfile}",
+        help=f"Unix style pathname pattern expansion used to find the Helmfile files, default is {default_helmfile}",
         default=default_helmfile,
     )
     parser.add_argument(
@@ -67,16 +67,31 @@ def main():
         action="store_true",
         help="Do not run pre-commit hooks",
     )
+    parser.add_argument(
+        "--ignore-folder",
+        help="Ignore the folder when looking for the Helmfile files",
+        action="append",
+        default=[],
+    )
 
     parser.add_argument("input", nargs="*", help="The yaml modified files")
     args = parser.parse_args()
 
+    ignore_folders = [Path(folder) for folder in args.ignore_folder]
     ruamel_yaml = ruamel.yaml.YAML()
 
     helmfile_filenames = set()
     if args.input:
         refs = {}
         for helmfiles_filename in glob.glob(args.helmfile, recursive=True):
+            helmfiles_filename_path = Path(helmfiles_filename)
+            ignore = False
+            for ignore_folder in ignore_folders:
+                if ignore_folder in helmfiles_filename_path.parents:
+                    ignore = True
+                    break
+            if ignore:
+                continue
             with open(helmfiles_filename) as f:
                 data = yaml.load(f, Loader=yaml.SafeLoader)
                 for release in data["releases"]:
