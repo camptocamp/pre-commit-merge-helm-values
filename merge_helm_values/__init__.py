@@ -97,7 +97,7 @@ def main():
     for helmfile_filename in helmfile_filenames:
         with helmfile_filename.open() as f:
             data = yaml.load(f, Loader=yaml.SafeLoader)
-        assert len(data["releases"]) == 1
+        assert len(data["releases"]) == 1, f"Expected only one release in {helmfile_filename}"
         for release in data["releases"]:
             values = CommentedMap()
             for value_filename in release.get("values", []):
