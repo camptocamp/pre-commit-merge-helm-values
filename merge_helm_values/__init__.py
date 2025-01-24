@@ -62,6 +62,11 @@ def main():
         help=f"Skip the pre-commit hooks, default is {default_pre_commit_skip}",
         default=default_pre_commit_skip,
     )
+    parser.add_argument(
+        "--no-pre-commit",
+        action="store_true",
+        help="Do not run pre-commit hooks",
+    )
 
     parser.add_argument("input", nargs="*", help="The yaml modified files")
     args = parser.parse_args()
@@ -112,26 +117,31 @@ def main():
                         str(real_value_filename.resolve().relative_to(os.getcwd())),
                     )
             values_filename = helmfile_filename.parent.joinpath("values.yaml")
-            original = ""
-            if values_filename.exists():
-                with values_filename.open() as f:
-                    original = yaml.dump(yaml.load(f, Loader=yaml.SafeLoader), default_flow_style=False)
-
-            # Update the file if there is a change
-            values_str = StringIO()
-            ruamel_yaml.dump(values, values_str)
-            if original != yaml.dump(
-                yaml.load(values_str.getvalue(), Loader=yaml.SafeLoader), default_flow_style=False
-            ):
-                values_filenames.append(values_filename)
+            if args.no_pre_commit:
                 print(f"Updating {values_filename}")
                 with values_filename.open("w") as f:
                     ruamel_yaml.dump(values, f)
+            else:
+                original = ""
+                if values_filename.exists():
+                    with values_filename.open() as f:
+                        original = yaml.dump(yaml.load(f, Loader=yaml.SafeLoader), default_flow_style=False)
+
+                # Update the file if there is a change
+                values_str = StringIO()
+                ruamel_yaml.dump(values, values_str)
+                if original != yaml.dump(
+                    yaml.load(values_str.getvalue(), Loader=yaml.SafeLoader), default_flow_style=False
+                ):
+                    values_filenames.append(values_filename)
+                    print(f"Updating {values_filename}")
+                    with values_filename.open("w") as f:
+                        ruamel_yaml.dump(values, f)
 
     if not values_filenames:
         return
 
-    if args.pre_commit is not None:
+    if not args.no_pre_commit and args.pre_commit is not None:
         subprocess.run(  # noqa: S603
             [  # noqa: S607
                 "pre-commit",
