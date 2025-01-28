@@ -40,10 +40,10 @@ def _deep_merge(base: dict[str, Any], other: dict[str, Any], other_file_name: st
                     base[key] = LiteralScalarString(value)
                 else:
                     base[key] = value
-                base.yaml_add_eol_comment(key=key, comment=f"from {other_file_name}")
+                base.yaml_add_eol_comment(key=key, comment=f"from {other_file_name}")  # type: ignore[attr-defined]
 
 
-def main():
+def main() -> None:
     """Merge the HELM values files into a single file."""
     parser = argparse.ArgumentParser(description="Merge the HELM values files into a single file")
     default_helmfile = "**/helmfile-base.yaml"
@@ -73,16 +73,16 @@ def main():
         action="append",
         default=[],
     )
-
     parser.add_argument("input", nargs="*", help="The yaml modified files")
+
     args = parser.parse_args()
 
     ignore_folders = [Path(folder) for folder in args.ignore_folder]
     ruamel_yaml = ruamel.yaml.YAML()
 
-    helmfile_filenames = set()
+    helmfile_filenames: set[Path] = set()
     if args.input:
-        refs = {}
+        refs: dict[Path, list[Path]] = {}
         for helmfiles_filename in glob.glob(args.helmfile, recursive=True):
             helmfiles_filename_path = Path(helmfiles_filename)
             ignore = False
@@ -92,7 +92,7 @@ def main():
                     break
             if ignore:
                 continue
-            with open(helmfiles_filename) as f:
+            with open(helmfiles_filename, encoding="utf-8") as f:
                 data = yaml.load(f, Loader=yaml.SafeLoader)
                 for release in data["releases"]:
                     for value_filename in release.get("values", []):
@@ -106,7 +106,7 @@ def main():
                 for helmfile_filename in refs[pathname]:
                     helmfile_filenames.add(helmfile_filename)
     else:
-        helmfile_filenames = [Path(filename) for filename in glob.glob(args.helmfile, recursive=True)]
+        helmfile_filenames = {Path(filename) for filename in glob.glob(args.helmfile, recursive=True)}
 
     print("Found helmfiles:")
     for helmfile_filename in helmfile_filenames:
@@ -125,7 +125,7 @@ def main():
                 if not real_value_filename.exists():
                     print(f"File {real_value_filename} does not exist")
                     continue
-                with open(real_value_filename) as f:
+                with open(real_value_filename, encoding="utf-8") as f:
                     _deep_merge(
                         values,
                         yaml.load(f, Loader=yaml.SafeLoader),
@@ -157,7 +157,7 @@ def main():
         return
 
     if not args.no_pre_commit and args.pre_commit is not None:
-        subprocess.run(  # noqa: S603
+        subprocess.run(  # noqa: S603  # pylint: disable=subprocess-run-check
             [  # noqa: S607
                 "pre-commit",
                 "run",

@@ -18,6 +18,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     if: "!startsWith(github.event.head_commit.message, '[skip ci] ')"
+    outputs:
+      success: ${{ steps.success.outputs.success }}
 
     steps:
       - uses: actions/checkout@v4
@@ -52,3 +54,31 @@ jobs:
           path: /tmp/pre-commit.patch
           retention-days: 1
         if: failure()
+
+      - run: echo success=true >> $GITHUB_OUTPUT
+        id: success
+
+  build:
+    name: Continuous integration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    needs: pre-commit
+    if: "always() &&  !startsWith(github.event.head_commit.message, '[skip ci] ')"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python3 -m pip install --requirement=.github/requirements.txt
+
+      - run: c2cciutils-env
+        env:
+          GITHUB_EVENT: ${{ toJson(github) }}
+
+      - run: poetry install
+
+      - run: poetry run prospector --output-format=pylint
+
+      - run: "[[ ${{ needs.pre-commit.outputs.success }} == 'true' ]]"
