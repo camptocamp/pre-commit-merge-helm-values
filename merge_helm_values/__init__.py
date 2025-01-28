@@ -110,6 +110,12 @@ def main() -> None:
                     helmfile_filenames.add(helmfile_filename)
     else:
         helmfile_filenames = {Path(filename) for filename in glob.glob(args.helmfile, recursive=True)}
+        for ignore_folder in ignore_folders:
+            helmfile_filenames = {
+                helmfile_filename
+                for helmfile_filename in helmfile_filenames
+                if ignore_folder not in helmfile_filename.parents
+            }
 
     print("Found helmfiles:")
     for helmfile_filename in helmfile_filenames:
