@@ -84,6 +84,9 @@ def main() -> None:
     if args.input:
         refs: dict[Path, list[Path]] = {}
         for helmfiles_filename in glob.glob(args.helmfile, recursive=True):
+            if helmfiles_filename in args.input:
+                helmfile_filenames.add(Path(helmfiles_filename))
+                continue
             helmfiles_filename_path = Path(helmfiles_filename)
             ignore = False
             for ignore_folder in ignore_folders:
