@@ -7,7 +7,7 @@ repos:
         name: merge helm values
         entry: merge-helm-values
         language: python
-        files: |
+        files: |-
           (?x)^(
             .*\.yaml
           )$
@@ -29,43 +29,34 @@ repos:
       - id: trailing-whitespace
       - id: mixed-line-ending
       - id: check-json
-  - repo: https://github.com/psf/black
-    rev: 24.8.0
-    hooks:
-      - id: black
-  - repo: https://github.com/PyCQA/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
-  - repo: https://github.com/PyCQA/docformatter
-    rev: v1.7.5
-    hooks:
-      - id: docformatter
   - repo: https://github.com/PyCQA/prospector
     rev: v1.13.1
     hooks:
       - id: prospector
         args:
           - --tool=ruff
+          - --die-on-tool-error
+          - --output-format=pylint
+          - --profile=.prospector.yaml
+          - --profile=utils:autofix
         additional_dependencies:
           - prospector-profile-duplicated==1.5.0 # pypi
           - prospector-profile-utils==1.10.2 # pypi
           - ruff==0.7.1 # pypi
-  - repo: https://github.com/PyCQA/autoflake
-    rev: v2.3.1
-    hooks:
-      - id: autoflake
+      - id: prospector
+        args:
+          - --die-on-tool-error
+          - --output-format=pylint
+          - --profile=utils:tests
+          - --profile=utils:autofix
+        additional_dependencies:
+          - prospector-profile-utils==1.20.2 # pypi
+          - ruff==0.9.6 # pypi
   - repo: https://github.com/codespell-project/codespell
     rev: v2.3.0
     hooks:
       - id: codespell
         exclude: ^poetry.lock$
-  - repo: https://github.com/asottile/pyupgrade
-    rev: v3.17.0
-    hooks:
-      - id: pyupgrade
-        args:
-          - --py39-plus
   - repo: https://github.com/pre-commit/mirrors-prettier
     rev: v3.1.0
     hooks:
@@ -91,9 +82,6 @@ repos:
     rev: 0.29.3
     hooks:
       - id: check-github-workflows
-      - id: check-renovate
-        additional_dependencies:
-          - pyjson5==1.6.6 # pypi
       - id: check-github-actions
       - id: check-jsonschema
         name: Check GitHub Workflows set timeout-minutes
@@ -123,3 +111,11 @@ repos:
     rev: 38.106.3
     hooks:
       - id: renovate-config-validator
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.6
+    hooks:
+      - id: ruff-format
+  - repo: https://github.com/sbrunner/python-versions-hook
+    rev: 0.8.0
+    hooks:
+      - id: python-versions

@@ -1,9 +1,9 @@
 inherits:
   - utils:base
   - utils:no-design-checks
-  - utils:unsafe
   - duplicated
 
+  - utils:fix
 mypy:
   options:
     python-version: '3.9'

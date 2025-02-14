@@ -18,6 +18,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     if: "!startsWith(github.event.head_commit.message, '[skip ci] ')"
+
     outputs:
       success: ${{ steps.success.outputs.success }}
 
@@ -45,7 +46,7 @@ jobs:
       - run: pre-commit run --all-files --color=always
         env:
           SKIP: poetry-lock,pipenv-lock,helm-lock
-      - run: git diff --exit-code --patch > /tmp/pre-commit.patch || true
+      - run: git diff --exit-code --patch > /tmp/pre-commit.patch; git diff --color; git reset --hard || true
         if: failure()
 
       - uses: actions/upload-artifact@v4
@@ -55,15 +56,15 @@ jobs:
           retention-days: 1
         if: failure()
 
-      - run: echo success=true >> $GITHUB_OUTPUT
-        id: success
+      - id: success
+        run: echo success=true >> $GITHUB_OUTPUT
 
   build:
     name: Continuous integration
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    needs: pre-commit
     if: "always() &&  !startsWith(github.event.head_commit.message, '[skip ci] ')"
+    needs: pre-commit
 
     steps:
       - uses: actions/checkout@v4
