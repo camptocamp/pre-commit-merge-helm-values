@@ -1,17 +1,19 @@
 #!/usr/bin/env python3
 
 import argparse
-import glob
 import os
 import subprocess
 from io import StringIO
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import ruamel.yaml
 import yaml
 from ruamel.yaml.comments import CommentedMap
 from ruamel.yaml.scalarstring import LiteralScalarString
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 def _commented_map(data: Any, file_name: str) -> Any:
@@ -79,10 +81,11 @@ def main() -> None:
     ignore_folders = [Path(folder) for folder in args.ignore_folder]
     ruamel_yaml = ruamel.yaml.YAML()
 
-    helmfile_filenames: set[Path] = set()
+    helmfile_filenames: Iterable[Path] = set()
     if args.input:
+        assert isinstance(helmfile_filenames, set)
         refs: dict[Path, list[Path]] = {}
-        for helmfiles_filename in glob.glob(args.helmfile, recursive=True):
+        for helmfiles_filename in Path().rglob(args.helmfile):
             helmfiles_filename_path = Path(helmfiles_filename)
             ignore = False
             for ignore_folder in ignore_folders:
@@ -96,7 +99,7 @@ def main() -> None:
                 helmfile_filenames.add(Path(helmfiles_filename))
                 continue
 
-            with open(helmfiles_filename, encoding="utf-8") as f:
+            with helmfiles_filename.open(encoding="utf-8") as f:
                 data = yaml.load(f, Loader=yaml.SafeLoader)
                 for release in data["releases"]:
                     for value_filename in release.get("values", []):
@@ -110,7 +113,7 @@ def main() -> None:
                 for helmfile_filename in refs[pathname]:
                     helmfile_filenames.add(helmfile_filename)
     else:
-        helmfile_filenames = {Path(filename) for filename in glob.glob(args.helmfile, recursive=True)}
+        helmfile_filenames = Path().rglob(args.helmfile)
         for ignore_folder in ignore_folders:
             helmfile_filenames = {
                 helmfile_filename
@@ -131,17 +134,17 @@ def main() -> None:
         for release in data["releases"]:
             values = CommentedMap()
             for value_filename in release.get("values", []):
-                real_value_filename = helmfile_filename.parent.joinpath(value_filename)
+                real_value_filename = helmfile_filename.parent / value_filename
                 if not real_value_filename.exists():
                     print(f"File {real_value_filename} does not exist")
                     continue
-                with open(real_value_filename, encoding="utf-8") as f:
+                with real_value_filename.open(encoding="utf-8") as f:
                     _deep_merge(
                         values,
                         yaml.load(f, Loader=yaml.SafeLoader),
-                        str(real_value_filename.resolve().relative_to(os.getcwd())),
+                        str(real_value_filename.resolve().relative_to(Path.cwd())),
                     )
-            values_filename = helmfile_filename.parent.joinpath("values.yaml")
+            values_filename = helmfile_filename.parent / "values.yaml"
             if args.no_pre_commit:
                 print(f"Updating {values_filename}")
                 with values_filename.open("w") as f:
@@ -168,7 +171,7 @@ def main() -> None:
         return
 
     if not args.no_pre_commit and args.pre_commit is not None:
-        subprocess.run(  # noqa: S603  # pylint: disable=subprocess-run-check
+        subprocess.run(  # noqa: S603, S607, RUF100  # pylint: disable=subprocess-run-check
             [  # noqa: S607
                 "pre-commit",
                 "run",
