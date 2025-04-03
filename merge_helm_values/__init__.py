@@ -32,15 +32,14 @@ def _deep_merge(base: dict[str, Any], other: dict[str, Any], other_file_name: st
     for key, value in other.items():
         if isinstance(value, dict) and isinstance(base.get(key), dict):
             _deep_merge(base[key], value, other_file_name)
+        elif isinstance(value, dict):
+            base[key] = _commented_map(value, other_file_name)
         else:
-            if isinstance(value, dict):
-                base[key] = _commented_map(value, other_file_name)
+            if isinstance(value, str) and "\n" in value:
+                base[key] = LiteralScalarString(value)
             else:
-                if isinstance(value, str) and "\n" in value:
-                    base[key] = LiteralScalarString(value)
-                else:
-                    base[key] = value
-                base.yaml_add_eol_comment(key=key, comment=f"from {other_file_name}")  # type: ignore[attr-defined]
+                base[key] = value
+            base.yaml_add_eol_comment(key=key, comment=f"from {other_file_name}")  # type: ignore[attr-defined]
 
 
 def main() -> None:
@@ -157,7 +156,8 @@ def main() -> None:
                 values_str = StringIO()
                 ruamel_yaml.dump(values, values_str)
                 if original != yaml.dump(
-                    yaml.load(values_str.getvalue(), Loader=yaml.SafeLoader), default_flow_style=False
+                    yaml.load(values_str.getvalue(), Loader=yaml.SafeLoader),
+                    default_flow_style=False,
                 ):
                     values_filenames.append(values_filename)
                     print(f"Updating {values_filename}")
@@ -181,6 +181,7 @@ def main() -> None:
                 if args.pre_commit_skip is not None
                 else os.environ
             ),
+            check=False,
         )
 
 
