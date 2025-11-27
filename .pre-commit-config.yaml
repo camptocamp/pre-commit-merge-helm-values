@@ -12,7 +12,7 @@ repos:
             .*\.yaml
           )$
   - repo: https://github.com/pre-commit/pre-commit
-    rev: v4.2.0
+    rev: v4.5.0
     hooks:
       - id: validate_manifest
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -41,7 +41,7 @@ repos:
         additional_dependencies:
           - prospector-profile-duplicated==1.10.5 # pypi
           - prospector-profile-utils==1.26.5 # pypi
-          - ruff==0.11.8 # pypi
+          - ruff==0.14.6 # pypi
         exclude: |-
           (?x)(
             ^tests?/?
@@ -59,7 +59,7 @@ repos:
           - --profile=utils:pre-commit
         additional_dependencies:
           - prospector-profile-utils==1.26.5 # pypi
-          - ruff==0.11.8 # pypi
+          - ruff==0.14.6 # pypi
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:
@@ -70,16 +70,16 @@ repos:
     hooks:
       - id: prettier
         additional_dependencies:
-          - prettier@3.5.3 # npm
-          - prettier-plugin-sh@0.17.2 # npm
-          - prettier-plugin-toml@2.0.4 # npm
+          - prettier@3.7.1 # npm
+          - prettier-plugin-sh@0.18.0 # npm
+          - prettier-plugin-toml@2.0.6 # npm
         exclude: |-
           (?x)^(
             \.gitattributes
             |\.gitignore
           )$
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.10.0.1
+    rev: v0.11.0.1
     hooks:
       - id: shellcheck
   - repo: https://github.com/jumanjihouse/pre-commit-hooks
@@ -87,7 +87,7 @@ repos:
     hooks:
       - id: git-check
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.33.0
+    rev: 0.35.0
     hooks:
       - id: check-github-workflows
       - id: check-github-actions
@@ -110,21 +110,21 @@ repos:
       - id: workflows-require-timeout
       - id: poetry2-lock
         additional_dependencies:
-          - poetry==2.1.2 # pypi
+          - poetry==2.2.1 # pypi
       - id: canonicalize
   - repo: https://github.com/sirwart/ripsecrets
     rev: v0.1.8
     hooks:
       - id: ripsecrets
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 40.0.6
+    rev: 40.62.1
     hooks:
       - id: renovate-config-validator
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.8
+    rev: v0.14.6
     hooks:
       - id: ruff-format
   - repo: https://github.com/sbrunner/python-versions-hook
-    rev: 1.0.0
+    rev: 1.3.0
     hooks:
       - id: python-versions
