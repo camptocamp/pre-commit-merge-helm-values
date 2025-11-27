@@ -140,6 +140,7 @@ def main() -> None:
                 if ignore_folder not in helmfile_filename.parents
             }
 
+    helmfile_filenames = list(helmfile_filenames)
     print("Found helmfiles:")
     for helmfile_filename in helmfile_filenames:
         print(f"  {helmfile_filename}")
