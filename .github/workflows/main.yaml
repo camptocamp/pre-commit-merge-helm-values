@@ -38,12 +38,12 @@ jobs:
 
       - uses: actions/cache@v4
         with:
-          path: ~/.cache/pre-commit
-          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+          path: ~/.cache/prek
+          key: prek-${{ hashFiles('.pre-commit-config.yaml') }}
           restore-keys: |
-            pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
-            pre-commit-
-      - run: pre-commit run --all-files --color=always
+            prek-${{ hashFiles('.pre-commit-config.yaml') }}
+            prek-
+      - run: prek run --all-files --color=always
         env:
           SKIP: poetry-lock,pipenv-lock,helm-lock
       - run: git diff --exit-code --patch > /tmp/pre-commit.patch; git diff --color; git reset --hard || true
