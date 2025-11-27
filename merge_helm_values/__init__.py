@@ -44,6 +44,25 @@ def _deep_merge(base: dict[str, Any], other: dict[str, Any], other_file_name: st
             base.yaml_add_eol_comment(key=key, comment=f"from {other_file_name}")  # type: ignore[attr-defined]
 
 
+def _sort_commented_map(data: Any) -> Any:
+    """Recursively sort CommentedMap keys while preserving comments."""
+    if isinstance(data, CommentedMap):
+        sorted_cm = CommentedMap()
+        for key in sorted(data.keys()):
+            sorted_cm[key] = _sort_commented_map(data[key])
+            # Transfer end-of-line comments
+            if hasattr(data, "ca") and data.ca.items.get(key):
+                if not hasattr(sorted_cm, "ca"):
+                    sorted_cm.ca.items = {}
+                sorted_cm.ca.items[key] = data.ca.items[key]
+        return sorted_cm
+    if isinstance(data, dict):
+        return CommentedMap({key: _sort_commented_map(data[key]) for key in sorted(data.keys())})
+    if isinstance(data, list):
+        return [_sort_commented_map(item) for item in data]
+    return data
+
+
 def main() -> None:
     """Merge the HELM values files into a single file."""
     parser = argparse.ArgumentParser(description="Merge the HELM values files into a single file")
@@ -144,6 +163,10 @@ def main() -> None:
                         yaml.load(f, Loader=yaml.SafeLoader),
                         str(real_value_filename.resolve().relative_to(Path.cwd())),
                     )
+
+            # Sort the keys while preserving comments
+            values = _sort_commented_map(values)
+
             values_filename = helmfile_filename.parent / "values.yaml"
             if args.no_pre_commit:
                 print(f"Updating {values_filename}")
