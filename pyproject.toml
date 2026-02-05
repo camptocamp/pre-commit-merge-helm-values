@@ -1,5 +1,5 @@
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 line-length = 110
 
 [tool.ruff.lint.pydocstyle]
@@ -9,7 +9,7 @@ convention = "numpy"
 merge-helm-values = "merge_helm_values:main"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4.0"
+python = ">=3.10,<4.0"
 PyYAML = "6.0.3"
 "ruamel.yaml" = "0.19.1"
 
@@ -48,11 +48,9 @@ license = "BSD-2-Clause"
 classifiers = [
     'Development Status :: 5 - Production/Stable',
     'Environment :: Console',
-    'License :: OSI Approved :: BSD License',
     'Operating System :: OS Independent',
     'Programming Language :: Python',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
@@ -64,7 +62,7 @@ authors = [
 ]
 repository = "https://github.com/camptocamp/pre-commit-merge-helm-values"
 dependencies = ["PyYAML", "ruamel.yaml"]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
