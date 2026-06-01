@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 import ruamel.yaml
 import yaml
 from ruamel.yaml.comments import CommentedMap
-from ruamel.yaml.scalarstring import LiteralScalarString
+from ruamel.yaml.scalarstring import DoubleQuotedScalarString, LiteralScalarString
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -18,16 +18,22 @@ if TYPE_CHECKING:
 
 def _commented_map(data: Any, file_name: str) -> Any:
     if isinstance(data, dict):
-        new_data = {
-            key: LiteralScalarString(value) if isinstance(value, str) and "\n" in value else value
-            for key, value in data.items()
-        }
-        cm = CommentedMap({key: _commented_map(value, file_name) for key, value in new_data.items()})
+        cm = CommentedMap({key: _commented_map(value, file_name) for key, value in data.items()})
         for key, value in data.items():
             if not isinstance(value, dict):
                 cm.yaml_add_eol_comment(key=key, comment=f"from {file_name}")
         return cm
-    return data
+    if isinstance(data, list):
+        return [_commented_map(value, file_name) for value in data]
+    return _yaml_string(data)
+
+
+def _yaml_string(value: Any) -> Any:
+    if isinstance(value, str) and "\n" in value:
+        return LiteralScalarString(value)
+    if isinstance(value, str) and value.lower() in {"on", "off"}:
+        return DoubleQuotedScalarString(value)
+    return value
 
 
 def _deep_merge(base: dict[str, Any], other: dict[str, Any], other_file_name: str) -> None:
@@ -37,10 +43,7 @@ def _deep_merge(base: dict[str, Any], other: dict[str, Any], other_file_name: st
         elif isinstance(value, dict):
             base[key] = _commented_map(value, other_file_name)
         else:
-            if isinstance(value, str) and "\n" in value:
-                base[key] = LiteralScalarString(value)
-            else:
-                base[key] = value
+            base[key] = _commented_map(value, other_file_name)
             base.yaml_add_eol_comment(key=key, comment=f"from {other_file_name}")  # type: ignore[attr-defined]
 
 

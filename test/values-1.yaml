@@ -3,3 +3,5 @@ two: 2a
 four: [4]
 five:
   six: 6
+mode: "ON"
+modes: ["on", "off"]
