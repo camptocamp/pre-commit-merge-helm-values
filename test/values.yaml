@@ -1,7 +1,12 @@
-one: 1 # from test/values-1.yaml
-two: 2b # from test/values-2.yaml
-four: # from test/values-1.yaml
-  - 4
 five:
   six: 6 # from test/values-1.yaml
+four: # from test/values-1.yaml
+  - 4
+mode: 'ON' # from test/values-1.yaml
+modes: # from test/values-1.yaml
+  - 'on'
+  - 'off'
+one: 1 # from test/values-1.yaml
+switch: 'off' # from test/values-2.yaml
 tree: 3 # from test/values-2.yaml
+two: 2b # from test/values-2.yaml
