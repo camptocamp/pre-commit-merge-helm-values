@@ -23,7 +23,7 @@ jobs:
       success: ${{ steps.success.outputs.success }}
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: GitHub event
         run: echo ${GITHUB_EVENT} | python3 -m json.tool
@@ -36,7 +36,7 @@ jobs:
       - run: python3 -m pip install --requirement=.github/requirements.txt
       - run: pip install --editable=.
 
-      - uses: actions/cache@v5
+      - uses: actions/cache@2c8a9bd7457de244a408f35966fab2fb45fda9c8 # v6.0.0
         with:
           path: ~/.cache/prek
           key: prek-${{ hashFiles('.pre-commit-config.yaml') }}
@@ -67,7 +67,7 @@ jobs:
     needs: pre-commit
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - uses: actions/setup-python@v6
         with:
