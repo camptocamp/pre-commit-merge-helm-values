@@ -65,5 +65,5 @@ dependencies = ["PyYAML", "ruamel.yaml"]
 requires-python = ">=3.10"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core==2.4.0"]
 build-backend = "poetry.core.masonry.api"
