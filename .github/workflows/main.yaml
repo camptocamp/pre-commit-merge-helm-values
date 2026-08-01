@@ -82,4 +82,4 @@ jobs:
 
       - run: poetry run prospector --output-format=pylint
 
-      - run: "[[ ${{ needs.pre-commit.outputs.success }} == 'true' ]]"
+      - run: '[[ "${{ needs.pre-commit.outputs.success || '''' }}" == "true" ]]'
