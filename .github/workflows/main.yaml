@@ -15,7 +15,7 @@ env:
 jobs:
   pre-commit:
     name: Pre commit
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     if: "!startsWith(github.event.head_commit.message, '[skip ci] ')"
 
@@ -61,7 +61,7 @@ jobs:
 
   build:
     name: Continuous integration
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     if: "always() &&  !startsWith(github.event.head_commit.message, '[skip ci] ')"
     needs: pre-commit
