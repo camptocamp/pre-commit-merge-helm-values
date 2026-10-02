@@ -41,8 +41,8 @@ repos:
         additional_dependencies:
           - prospector-profile-duplicated==1.12.0 # pypi
           - prospector-profile-utils==1.27.0 # pypi
-          - ruff==0.16.4 # pypi
-          - pylint[spelling]==4.0.7 # pypi
+          - ruff==0.16.9 # pypi
+          - pylint[spelling]==4.0.9 # pypi
         exclude: |-
           (?x)(
             ^tests?/?
@@ -60,8 +60,8 @@ repos:
           - --profile=utils:pre-commit
         additional_dependencies:
           - prospector-profile-utils==1.27.0 # pypi
-          - ruff==0.16.4 # pypi
-          - pylint[spelling]==4.0.7 # pypi
+          - ruff==0.16.9 # pypi
+          - pylint[spelling]==4.0.9 # pypi
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.3
     hooks:
@@ -72,9 +72,9 @@ repos:
     hooks:
       - id: prettier
         additional_dependencies:
-          - prettier@3.9.6 # npm
-          - prettier-plugin-sh@0.19.0 # npm
-          - prettier-plugin-toml@3.0.1 # npm
+          - prettier@3.9.9 # npm
+          - prettier-plugin-sh@0.20.2 # npm
+          - prettier-plugin-toml@3.0.2 # npm
         exclude: |-
           (?x)^(
             \.gitattributes
@@ -89,7 +89,7 @@ repos:
     hooks:
       - id: git-check
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.38.0
+    rev: 0.38.2
     hooks:
       - id: check-github-workflows
       - id: check-github-actions
@@ -112,18 +112,18 @@ repos:
       - id: workflows-require-timeout
       - id: poetry2-lock
         additional_dependencies:
-          - poetry==2.4.1 # pypi
+          - poetry==2.5.1 # pypi
       - id: canonicalize
   - repo: https://github.com/sirwart/ripsecrets
     rev: v0.1.8
     hooks:
       - id: ripsecrets
   - repo: https://github.com/renovatebot/pre-commit-hooks
-    rev: 44.44.0
+    rev: 44.115.4
     hooks:
       - id: renovate-config-validator
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.4
+    rev: v0.16.9
     hooks:
       - id: ruff-format
   - repo: https://github.com/sbrunner/python-versions-hook
